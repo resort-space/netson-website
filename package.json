@@ -1,0 +1,46 @@
+{
+  "name": "gold-price-vietnam",
+  "version": "1.0.0",
+  "description": "Gold price tracking website for Vietnam with real-time updates",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "20.10.5",
+    "@types/react": "18.2.45",
+    "@types/react-dom": "18.2.18",
+    "autoprefixer": "10.4.16",
+    "chart.js": "4.4.1",
+    "chartjs-adapter-date-fns": "3.0.0",
+    "clsx": "2.0.0",
+    "date-fns": "2.30.0",
+    "dotenv": "^17.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "0.294.0",
+    "multer": "1.4.5-lts.1",
+    "next": "14.0.4",
+    "next-intl": "3.4.1",
+    "pg": "8.11.3",
+    "postcss": "8.4.32",
+    "react": "18.2.0",
+    "react-chartjs-2": "5.2.0",
+    "react-dom": "18.2.0",
+    "tailwind-merge": "2.2.0",
+    "tailwindcss": "3.4.0",
+    "typescript": "5.3.3",
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "@types/multer": "1.4.11",
+    "@types/pg": "8.10.9",
+    "eslint": "8.56.0",
+    "eslint-config-next": "14.0.4"
+  }
+}
