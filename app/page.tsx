@@ -165,9 +165,9 @@ export default function HomePage() {
               {products.map((product) => (
                 <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   <div className="aspect-square bg-gray-200 relative">
-                    {product.featured_image ? (
+                    {product.featured_image || (product.images && product.images.length > 0) ? (
                       <img
-                        src={product.featured_image}
+                        src={product.featured_image || product.images[0]}
                         alt={product.title}
                         className="w-full h-full object-cover"
                         loading="lazy"

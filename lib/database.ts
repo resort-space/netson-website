@@ -252,7 +252,7 @@ export interface Product {
   category_id?: number;
   price: number | null;
   images: string[]; // Array of image URLs
-  featured_image?: string;
+  featured_image?: string | null;
   meta_description?: string;
   slug?: string;
   is_featured: boolean;
