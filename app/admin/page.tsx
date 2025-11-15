@@ -186,9 +186,9 @@ export default function AdminPage() {
                 >
                   Quản Lý Sản Phẩm
                 </Link>
-                <button className="block w-full bg-green-100 hover:bg-green-200 text-green-700 py-3 px-4 rounded-lg font-medium transition-colors duration-200 text-center">
+                <Link href="/admin/products" className="block w-full bg-green-100 hover:bg-green-200 text-green-700 py-3 px-4 rounded-lg font-medium transition-colors duration-200 text-center">
                   Thêm Sản Phẩm Mới
-                </button>
+                </Link>
               </div>
             </div>
 

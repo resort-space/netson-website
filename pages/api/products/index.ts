@@ -19,6 +19,7 @@ export default async function handler(
         limit = 12
       } = req.query as ProductFilters & { page?: string; limit?: string };
 
+      // First get products
       let query = `
         SELECT p.*, c.name as category_name
         FROM products p
@@ -86,13 +87,32 @@ export default async function handler(
 
       const result = await db.query(query, params);
 
+      // Fetch images for all products in this result set
+      const productIds = result.rows.map(row => row.id);
+      let imageResults: any = { rows: [] };
+      if (productIds.length > 0) {
+        const imageQuery = `
+          SELECT product_id, array_agg(secure_url) as image_urls
+          FROM images
+          WHERE product_id = ANY($1)
+          GROUP BY product_id
+        `;
+        imageResults = await db.query(imageQuery, [productIds]);
+      }
+
+      // Create a map of product_id to images
+      const imageMap = new Map();
+      imageResults.rows.forEach(row => {
+        imageMap.set(row.product_id, row.image_urls || []);
+      });
+
       const products: Product[] = result.rows.map(row => ({
         id: row.id,
         title: row.title,
         description: row.description,
         category_id: row.category_id,
         price: row.price ? Number(row.price) : null,
-        images: row.images || [],
+        images: imageMap.get(row.id) || [], // Get images from the map
         featured_image: row.featured_image,
         meta_description: row.meta_description,
         slug: row.slug,

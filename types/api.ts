@@ -41,7 +41,6 @@ export interface AuthResponse {
   message?: string;
 }
 
-// Product management types
 export interface CreateProductRequest {
   title: string;
   description?: string;
@@ -52,6 +51,9 @@ export interface CreateProductRequest {
   is_active?: boolean;
   materials?: string;
   customization_available?: boolean;
+  stock_quantity?: number;
+  weight_grams?: number;
+  dimensions_cm?: any;
 }
 
 export interface UpdateProductRequest extends CreateProductRequest {
