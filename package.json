@@ -1,7 +1,7 @@
 {
-  "name": "gold-price-vietnam",
+  "name": "netson-website",
   "version": "1.0.0",
-  "description": "Gold price tracking website for Vietnam with real-time updates",
+  "description": "NetSon - Professional Trophy and Award Manufacturing Website",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,6 +26,7 @@
     "lucide-react": "0.294.0",
     "multer": "1.4.5-lts.1",
     "next": "14.0.4",
+    "next-cloudinary": "^6.17.5",
     "next-intl": "3.4.1",
     "pg": "8.11.3",
     "postcss": "8.4.32",

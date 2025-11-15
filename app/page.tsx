@@ -1,389 +1,234 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import GoldPriceChart from '../components/GoldPriceChart';
-import { RefreshCw, TrendingUp, Info } from 'lucide-react';
-import { useBrands } from '../contexts/BrandContext';
-
-interface GoldPrice {
-  id: number;
-  brand: string;
-  buy_price: number;
-  sell_price: number;
-  date: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ChartData {
-  date: string;
-  buy_price: number;
-  sell_price: number;
-  average_price: number;
-  brand: string;
-}
+import Header from '../components/Header';
+import CategoryNavigation from '../components/CategoryNavigation';
+import Breadcrumb from '../components/Breadcrumb';
+import Banner from '../components/Banner';
+import { Product } from '../lib/database';
 
 export default function HomePage() {
-  const [goldPrices, setGoldPrices] = useState<GoldPrice[]>([]);
-  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [showPopupBanner, setShowPopupBanner] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [sortBy, setSortBy] = useState<'default' | 'popular' | 'rating' | 'latest' | 'price_low' | 'price_high'>('default');
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-
-  const { brands, loading } = useBrands();
-  
-  console.log('🏷️ Brands from context:', brands);
-  console.log('🔄 Loading state:', loading);
-  console.log('📊 Chart data state:', chartData);
-  console.log('📏 Brands length:', brands.length);
-  console.log('📏 Chart data length:', chartData.length);
-  
-
-
-  const fetchGoldPrices = async () => {
-    try {
-      // Lấy dữ liệu của 7 ngày gần nhất để có thể so sánh
-      const response = await fetch('/api/gold-prices?days=7');
-      if (response.ok) {
-        const data = await response.json();
-        setGoldPrices(data.data || []);
-        setLastUpdated(new Date());
-      }
-    } catch (error) {
-      console.error('Error fetching gold prices:', error);
-    }
-  };
-
-  const fetchChartData = async () => {
-    try {
-      console.log('🔍 Fetching chart data...');
-      const response = await fetch('/api/gold-prices/chart?period=month');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📊 Chart API response:', data);
-        const newChartData = data.data || [];
-        console.log('📈 New chart data:', newChartData);
-        setChartData(newChartData);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching chart data:', error);
-    }
-  };
-
+  // Show popup banner on first visit
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      await Promise.all([fetchGoldPrices(), fetchChartData()]);
-      setIsLoading(false);
-    };
-
-    loadData();
-
-    // Auto-refresh every hour between 9 AM and 7 PM
-    const interval = setInterval(() => {
-      const now = new Date();
-      const hour = now.getHours();
-      if (hour >= 9 && hour < 19) {
-        loadData();
-      }
-    }, 60 * 60 * 1000); // 1 hour
-
-    return () => clearInterval(interval);
+    const hasSeenBanner = localStorage.getItem('netson-banner-seen');
+    if (!hasSeenBanner) {
+      setShowPopupBanner(true);
+    }
   }, []);
 
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    await Promise.all([fetchGoldPrices(), fetchChartData()]);
-    setIsLoading(false);
+  const handleBannerClose = () => {
+    setShowPopupBanner(false);
+    localStorage.setItem('netson-banner-seen', 'true');
   };
 
-  const getPreviousPrice = (brand: string, currentDate: string) => {
-    const current = new Date(currentDate);
-    const previous = new Date(current);
-    previous.setDate(previous.getDate() - 1);
-    
-    // Chuyển đổi ngày hiện tại và ngày trước về format YYYY-MM-DD
-    const currentDateStr = current.toISOString().split('T')[0];
-    const previousDateStr = previous.toISOString().split('T')[0];
-    
-    console.log(`Tìm giá trước cho ${brand}:`);
-    console.log(`Current date: ${currentDate} -> ${currentDateStr}`);
-    console.log(`Previous date: ${previousDateStr}`);
-    console.log(`Available dates:`, goldPrices.map(p => `${p.brand}: ${p.date} -> ${new Date(p.date).toISOString().split('T')[0]}`));
-    
-    // Tìm giá của ngày trước trong dữ liệu hiện tại
-    const previousPrice = goldPrices.find(
-      price => {
-        const priceDateStr = new Date(price.date).toISOString().split('T')[0];
-        return price.brand === brand && priceDateStr === previousDateStr;
-      }
-    );
-    
-    if (previousPrice) {
-      console.log(`Tìm thấy giá trước: ${previousPrice.buy_price} / ${previousPrice.sell_price}`);
-      return previousPrice;
-    }
-    
-    // Nếu không tìm thấy, thử tìm trong khoảng 7 ngày gần nhất
-    console.log(`Không tìm thấy ngày trước, tìm trong 7 ngày gần nhất...`);
-    for (let i = 2; i <= 7; i++) {
-      const checkDate = new Date(current);
-      checkDate.setDate(checkDate.getDate() - i);
-      const checkDateStr = checkDate.toISOString().split('T')[0];
-      
-      const foundPrice = goldPrices.find(
-        price => {
-          const priceDateStr = new Date(price.date).toISOString().split('T')[0];
-          return price.brand === brand && priceDateStr === checkDateStr;
+  const handleCategoryChange = (categorySlug: string | null) => {
+    setCurrentCategory(categorySlug);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleSortChange = (newSortBy: typeof sortBy) => {
+    setSortBy(newSortBy);
+  };
+
+  // Load products when category or search changes
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoading(true);
+      try {
+        let url = '/api/products?';
+        if (currentCategory) {
+          url += `category=${currentCategory}&`;
         }
-      );
-      
-      if (foundPrice) {
-        console.log(`Tìm thấy giá ở ngày ${checkDateStr}: ${foundPrice.buy_price} / ${foundPrice.sell_price}`);
-        return foundPrice;
-      }
-    }
-    
-    console.log(`Không tìm thấy giá trước cho ${brand}`);
-    return null;
-  };
+        if (searchQuery) {
+          url += `search=${encodeURIComponent(searchQuery)}&`;
+        }
+        url += `sort_by=${sortBy}`;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-gold-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải dữ liệu giá vàng...</p>
-        </div>
-      </div>
-    );
-  }
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setProducts(data.data || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [currentCategory, searchQuery, sortBy]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-yellow-100">
-      {/* Compact Header with Refresh */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-amber-200/50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="group bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-2 rounded-full hover:from-amber-600 hover:to-yellow-600 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 transform hover:-translate-y-0.5"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-              <span className="text-sm font-medium">Làm mới dữ liệu</span>
-            </button>
-            
-            {lastUpdated && (
-              <div className="flex items-center space-x-2 text-slate-600 bg-white/70 backdrop-blur-sm px-3 py-2 rounded-full border border-amber-200/50">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium">
-                  Cập nhật: {lastUpdated.toLocaleTimeString('vi-VN')}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Pop-up Banner */}
+      <Banner
+        isVisible={showPopupBanner}
+        onClose={handleBannerClose}
+        title="Chào mừng đến với NetSon!"
+        message="Chuyên sản xuất cúp vinh danh chất lượng cao. Thiết kế theo yêu cầu riêng biệt."
+      />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Chart Section - Moved to top */}
-        <div className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">
-              Biểu đồ giá vàng miếng
-            </h2>
-            <p className="text-slate-600">Theo dõi xu hướng giá vàng miếng theo thời gian</p>
-          </div>
-          
-          {brands.length === 0 ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-lg text-gray-600">Đang tải danh sách thương hiệu...</div>
-            </div>
-          ) : (
-            <GoldPriceChart data={chartData} brands={brands} />
-          )}
-        </div>
+      {/* Header */}
+      <Header />
 
-        {/* Price Table Section */}
-        <div className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-              Bảng giá chi tiết
-            </h2>
-            <p className="text-slate-600">So sánh giá giữa các thương hiệu một cách dễ dàng</p>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-amber-50 to-yellow-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-slate-700">Thương hiệu</th>
-                    <th className="px-6 py-4 text-center text-sm font-bold text-slate-700">Giá mua (*1000 VNĐ)</th>
-                    <th className="px-6 py-4 text-center text-sm font-bold text-slate-700">Giá bán (*1000 VNĐ)</th>
-                    <th className="px-6 py-4 text-center text-sm font-bold text-slate-700">Chênh lệch</th>
-                    <th className="px-6 py-4 text-center text-sm font-bold text-slate-700">
-                      <div className="flex flex-col items-center space-y-1">
-                        <span>Thay đổi</span>
-                        <span className="text-xs font-normal text-slate-500">So với ngày trước</span>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {brands.map((brand, index) => {
-                    const price = goldPrices.find(p => p.brand === brand.name);
-                    
-                    if (!price) {
-                      return (
-                        <tr key={brand.name} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-bold">{brand.name.charAt(0)}</span>
-                              </div>
-                              <span className="font-semibold text-slate-800">{brand.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-gray-400">Chưa có dữ liệu</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-gray-400">Chưa có dữ liệu</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-gray-400">-</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-gray-400">-</span>
-                          </td>
-                        </tr>
-                      );
-                    }
+      {/* Breadcrumb */}
+      <Breadcrumb items={[]} />
 
-                    const previousPrice = getPreviousPrice(brand.name, price.date);
-                    const buyPriceK = Math.round(price.buy_price / 1000);
-                    const sellPriceK = Math.round(price.sell_price / 1000);
-                    const spreadK = sellPriceK - buyPriceK;
-                    
-                    // Debug: Log để xem vấn đề
-                    console.log(`Brand: ${brand.name}, Date: ${price.date}`);
-                    console.log(`Current price: ${price.buy_price} / ${price.sell_price}`);
-                    console.log(`Previous price:`, previousPrice);
-                    console.log(`Gold prices array:`, goldPrices.map(p => `${p.brand}: ${p.date}`));
-                    
-                    const buyChange = previousPrice ? Math.round((price.buy_price - previousPrice.buy_price) / 1000) : 0;
-                    const sellChange = previousPrice ? Math.round((price.sell_price - previousPrice.sell_price) / 1000) : 0;
-                    
-                    return (
-                      <tr key={brand.name} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                              <span className="text-white text-sm font-bold">{brand.name.charAt(0)}</span>
-                            </div>
-                            <span className="font-semibold text-slate-800">{brand.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="font-bold text-emerald-600">{buyPriceK.toLocaleString('vi-VN')}</span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="font-bold text-red-600">{sellPriceK.toLocaleString('vi-VN')}</span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="font-medium text-blue-600">{spreadK.toLocaleString('vi-VN')}</span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex flex-col space-y-2">
-                            {/* Giá mua */}
-                            <div className="flex flex-col items-center space-y-1">
-                              <span className="text-xs font-medium text-slate-600">Giá mua</span>
-                              <div className={`text-xs px-3 py-1 rounded-full font-semibold ${buyChange > 0 ? 'bg-green-100 text-green-700' : buyChange < 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                                {buyChange > 0 ? '↗️ +' : buyChange < 0 ? '↘️ ' : '➖ '}
-                                {buyChange !== 0 ? Math.abs(buyChange).toLocaleString('vi-VN') : '0'}
-                              </div>
-                            </div>
-                            
-                            {/* Giá bán */}
-                            <div className="flex flex-col items-center space-y-1">
-                              <span className="text-xs font-medium text-slate-600">Giá bán</span>
-                              <div className={`text-xs px-3 py-1 rounded-full font-semibold ${sellChange > 0 ? 'bg-green-100 text-green-700' : sellChange < 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                                {sellChange > 0 ? '↗️ +' : sellChange < 0 ? '↘️ ' : '➖ '}
-                                {sellChange !== 0 ? Math.abs(sellChange).toLocaleString('vi-VN') : '0'}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      {/* Category Navigation with Search */}
+      <CategoryNavigation
+        currentCategory={currentCategory || undefined}
+        onCategoryChange={handleCategoryChange}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+      />
 
-        {/* Contact & Contribution Section */}
-        <div className="relative">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-4">
-              Thông tin liên hệ & Đóng góp
-            </h3>
-            <p className="text-lg text-slate-600">
-              Liên hệ với chúng tôi để đóng góp ý kiến hoặc báo cáo vấn đề
+      {/* Banner Section */}
+      <section className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              {currentCategory ? `Danh mục: ${currentCategory}` : 'NetSon - Cúp Vinh Danh Chuyên Nghiệp'}
+            </h1>
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">
+              {currentCategory
+                ? 'Khám phá bộ sưu tập sản phẩm chất lượng cao của chúng tôi'
+                : 'Sản xuất và chế tác các loại cúp, huy chương, bằng khen vinh danh với thiết kế tinh tế và chất lượng vượt trội'
+              }
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group relative bg-gradient-to-br from-white to-amber-50/50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 text-center border border-amber-100/50 hover:-translate-y-2">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-yellow-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                  <span className="text-3xl">📧</span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Email liên hệ</h3>
-                <p className="text-slate-600 leading-relaxed mb-4">
-                  Gửi email để đóng góp ý kiến, báo cáo lỗi hoặc đề xuất tính năng mới
-                </p>
-                <a 
-                  href="mailto:quangvantiep.work@gmail.com" 
-                  className="inline-block bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 font-medium"
+        </div>
+      </section>
+
+      {/* Sort Options */}
+      <section className="bg-white py-6 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="text-lg font-semibold text-gray-800">
+              Sắp xếp theo:
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'default' as const, label: 'Mặc định' },
+                { value: 'popular' as const, label: 'Phổ biến' },
+                { value: 'rating' as const, label: 'Đánh giá' },
+                { value: 'latest' as const, label: 'Mới nhất' },
+                { value: 'price_low' as const, label: 'Thấp đến cao' },
+                { value: 'price_high' as const, label: 'Cao đến thấp' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleSortChange(option.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    sortBy === option.value
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  quangvantiep.work@gmail.com
-                </a>
-              </div>
-            </div>
-
-            <div className="group relative bg-gradient-to-br from-white to-blue-50/50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 text-center border border-blue-100/50 hover:-translate-y-2">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                  <span className="text-3xl">💡</span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Đóng góp ý kiến</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Chia sẻ ý tưởng để cải thiện nền tảng theo dõi giá vàng, giúp chúng tôi phục vụ tốt hơn
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative bg-gradient-to-br from-white to-emerald-50/50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 text-center border border-emerald-100/50 hover:-translate-y-2">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                  <span className="text-3xl">🐛</span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Báo cáo lỗi</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Nếu bạn gặp vấn đề khi sử dụng, hãy báo cáo để chúng tôi khắc phục nhanh chóng
-                </p>
-              </div>
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Product Grid */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isLoading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Đang tải sản phẩm...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-gray-500">
+                <p className="text-xl mb-2">Không tìm thấy sản phẩm nào</p>
+                <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="aspect-square bg-gray-200 relative">
+                    {product.featured_image ? (
+                      <img
+                        src={product.featured_image}
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <span>Không có ảnh</span>
+                      </div>
+                    )}
+                    {product.is_featured && (
+                      <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
+                        Nổi bật
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {product.title}
+                    </h3>
+
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="text-lg font-bold text-blue-600">
+                        {product.price ? `${product.price.toLocaleString('vi-VN')}₫` : 'Liên hệ'}
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-600">
+                        ⭐ {product.rating.toFixed(1)} ({product.likes} lượt thích)
+                      </div>
+                    </div>
+
+                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200">
+                      Xem chi tiết
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="bg-gradient-to-r from-gray-800 to-gray-900 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Cần Tư Vấn Thiết Kế Cúp?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Chúng tôi chuyên thiết kế và sản xuất cúp theo yêu cầu riêng biệt của quý khách hàng. Liên hệ ngay để được tư vấn miễn phí!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/contact" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors duration-200">
+              Liên Hệ Ngay
+            </a>
+            <a href="/about" className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 rounded-lg font-semibold transition-all duration-200">
+              Về Chúng Tôi
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
