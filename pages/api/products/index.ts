@@ -102,7 +102,7 @@ export default async function handler(
 
       // Create a map of product_id to images
       const imageMap = new Map();
-      imageResults.rows.forEach(row => {
+      imageResults.rows.forEach((row:any) => {
         imageMap.set(row.product_id, row.image_urls || []);
       });
 
