@@ -1,222 +1,335 @@
-# Giá Vàng Việt Nam - Gold Price Vietnam
+# 🌟 NetSon - Website Cúp Vinh Danh Chuyên Nghiệp
 
-Một trang web cập nhật giá vàng mới nhất tại Việt Nam với cả server-side rendering và static generation để tối ưu hóa SEO.
+Website chính thức của NetSon - chuyên sản xuất và phân phối các loại cúp vinh danh, huy chương, bảng khen, kỷ niệm chương chất lượng cao.
 
-A website for tracking the latest gold prices in Vietnam with both server-side rendering and static generation for SEO optimization.
+## 📋 Tổng quan
 
-## 🌟 Tính năng chính / Key Features
+NetSon là nền tảng E-commerce chuyên nghiệp cho việc bán và quản lý cúp vinh danh, huy chương thể thao và kỷ niệm chương. Dự án được phát triển với công nghệ tiên tiến, thiết kế responsive và tối ưu SEO.
 
-- **Cập nhật giá vàng theo thời gian thực** / Real-time gold price updates
-- **Hỗ trợ 5 thương hiệu uy tín** / Support for 5 trusted brands: SJC, PNJ, DOJI, Phú Quý, Bảo Tín Minh Châu
-- **Biểu đồ giá vàng chi tiết** / Detailed gold price charts
-- **Hỗ trợ đa ngôn ngữ** / Multi-language support (Vietnamese/English)
-- **Tối ưu hóa SEO** / SEO optimized
-- **Responsive design** / Mobile-friendly
-- **Admin panel** / Quản trị dữ liệu
-- **Auto-refresh** / Tự động cập nhật
+## ✨ Tính năng chính
 
-## 🚀 Công nghệ sử dụng / Tech Stack
+### 🏆 Quản lý sản phẩm
+- **6 danh mục sản phẩm chính**: Cúp Vinh Danh, Cúp Thể Thao, Bảng Vinh Danh, Kỷ Niệm Chương, Cúp Chế Tác Theo Yêu Cầu, Sản Phẩm Đã Thực Hiện
+- **Thông tin chi tiết**: Giá cả, mô tả, chất liệu, kích thước, tồn kho
+- **Sản phẩm nổi bật**: Hỗ trợ đánh dấu và ưu tiên hiển thị
+- **Trình bày hình ảnh**: Hỗ trợ nhiều ảnh cho mỗi sản phẩm
 
-### Backend
-- **Node.js** + **Express** (API routes)
-- **PostgreSQL** (Supabase)
-- **Next.js API Routes**
+### 🖼️ Quản lý hình ảnh
+- **Upload ảnh lên Cloudinary**: Hỗ trợ PNG, JPG, GIF tối đa 5MB
+- **Gán ảnh cho sản phẩm**: Giao diện dropdown dễ dàng gán ảnh cho sản phẩm
+- **Quản lý metadata**: Tiêu đề, alt text, trạng thái featured
+- **Gallery admin**: Xem và quản lý tất cả hình ảnh
 
-### Frontend
+### 🔍 Tìm kiếm & Lọc
+- **Tìm kiếm theo từ khóa**: Tên sản phẩm và mô tả
+- **Lọc theo danh mục**: Navigation menu phân loại sản phẩm
+- **Sắp xếp**: Mặc định, phổ biến, đánh giá, mới nhất, giá thấp→cao, cao→thấp
+
+### 🛠️ Admin Dashboard
+- **Quản trị sản phẩm**: CRUD hoàn chỉnh (tạo/sửa/xóa/đọc)
+- **Quản trị hình ảnh**: Upload và gán cho sản phẩm
+- **Dashboard thống kê**: Số lượng sản phẩm, bài viết, hình ảnh
+- **Authentication**: Bảo mật hệ thống admin
+
+### 🎨 Giao diện & UX
+- **Responsive Design**: Hoạt động tối ưu trên mọi thiết bị
+- **UI/UX hiện đại**: Tailwind CSS với thiết kế chuyên nghiệp
+- **Breadcrumb navigation**: Dễ dàng điều hướng
+- **Popup banner**: Thông báo khuyến mãi khi truy cập lần đầu
+
+## 🏗️ Kiến trúc hệ thống
+
+### Tech Stack
+
+#### Frontend
 - **Next.js 14** (App Router)
 - **React 18** + **TypeScript**
-- **Tailwind CSS**
-- **Chart.js** (Biểu đồ)
+- **Tailwind CSS** (Styling)
 - **Lucide React** (Icons)
+- **Local Storage** (Client-side data)
 
-### Database
-- **PostgreSQL** hosted on Supabase
-- **Connection pooling** for performance
+#### Backend & Database
+- **Next.js API Routes** (Built-in API)
+- **PostgreSQL** + **Supabase** (Database)
+- **Prisma/Direct SQL** (Database queries)
 
-## 📋 Yêu cầu hệ thống / Requirements
+#### External Services
+- **Cloudinary** (Image hosting & optimization)
+- **Supabase** (Database hosting)
 
-- Node.js 18+ 
-- npm hoặc yarn
-- PostgreSQL database (Supabase)
+### Cấu trúc dự án
 
-## 🛠️ Cài đặt / Installation
-
-### 1. Clone repository
-```bash
-git clone <repository-url>
-cd gold-price-full
+```
+nets-website/
+├── app/                          # Next.js App Router
+│   ├── page.tsx                 # Trang chủ
+│   ├── layout.tsx               # Root layout
+│   ├── globals.css              # Global styles
+│   ├── admin/
+│   │   ├── page.tsx            # Admin dashboard
+│   │   ├── products/           # Quản lý sản phẩm
+│   │   ├── images/             # Quản lý hình ảnh
+│   │   └── login/              # Admin authentication
+│
+├── components/                   # Reusable components
+│   ├── Header.tsx              # Header navigation
+│   ├── CategoryNavigation.tsx # Danh mục sản phẩm
+│   ├── Banner.tsx              # Popup banner
+│   └── Breadcrumb.tsx          # Breadcrumb navigation
+│
+├── lib/                         # Utilities & configs
+│   ├── database.ts             # Database connection
+│   └── utils/                  # Helper functions
+│
+├── pages/api/                   # API routes
+│   ├── products/               # Product APIs
+│   │   ├── index.ts           # Get products (public)
+│   │   └── crud.ts            # Product CRUD (admin)
+│   ├── images/                 # Image APIs
+│   └── admin/                  # Admin APIs
+│       ├── upload-image.ts    # Upload images
+│       └── ...
+│
+├── types/                       # TypeScript definitions
+│   └── api.ts                  # API response types
+│
+├── scripts/                     # Database scripts
+│   ├── create-brands-table.sql
+│   ├── migrate.js
+│   └── seed-products.js        # Sample data
+│
+└── public/                      # Static assets
 ```
 
-### 2. Cài đặt dependencies
+## 🗄️ Cấu trúc Database
+
+### Bảng chính / Main Tables
+
+#### `products` - Sản phẩm
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  category_id INTEGER REFERENCES categories(id),
+  price DECIMAL(10,2),          -- Giá sản phẩm
+  meta_description TEXT,        -- SEO description
+  slug VARCHAR(255) UNIQUE,     -- URL slug
+  is_featured BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  stock_quantity INTEGER DEFAULT 0,
+  weight_grams DECIMAL(8,2),
+  dimensions_cm VARCHAR(100),
+  materials VARCHAR(255),
+  customization_available BOOLEAN DEFAULT TRUE,
+  sort_order INTEGER DEFAULT 0,
+  view_count INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
+  rating DECIMAL(3,2) DEFAULT 0,
+  featured_image TEXT,           -- URL ảnh nổi bật
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### `images` - Hình ảnh
+```sql
+CREATE TABLE images (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER REFERENCES products(id),
+  cloudinary_id VARCHAR(255),     -- Cloudinary ID
+  secure_url TEXT NOT NULL,       -- Cloudinary URL
+  public_id VARCHAR(255),
+  title VARCHAR(255),
+  alt_text TEXT,
+  is_featured BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### `categories` - Danh mục
+```sql
+CREATE TABLE categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE,
+  description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Indexes & Constraints
+- Primary keys trên tất cả bảng
+- Foreign key constraints giữa products ↔ categories, images ↔ products
+- Unique constraints trên slug fields
+- Indexes trên category_id, product_id, slug, is_active
+
+## 🚀 Cài đặt & Chạy dự án
+
+### Yêu cầu hệ thống
+- Node.js 18+
+- npm hoặc yarn
+- PostgreSQL database (Supabase recommended)
+
+### 1. Clone & Install
 ```bash
+git clone <repository-url>
+cd nets-website
 npm install
 ```
 
-### 3. Cấu hình môi trường / Environment Setup
-Tạo file `.env.local` với các thông tin sau:
+### 2. Cấu hình môi trường
+Tạo file `.env` với các thông tin:
 
 ```env
-DB_PASS=your_supabase_password
-DB_URL=your_supabase_connection_string
-DB_USER=your_supabase_username
-NEXTAUTH_SECRET=your_secret_key
+# Database (Supabase)
+DB_URL=postgresql://username:password@host:port/database
+
+# Cloudinary (nếu sử dụng)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_UPLOAD_PRESET=your_preset
+
+# Admin Authentication
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+
+# Next.js
+NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-### 4. Thiết lập database / Database Setup
+### 3. Thiết lập Database
 ```bash
-# Tạo bảng và index
+# Tạo tables & indexes
 npm run db:migrate
 
-# Thêm dữ liệu mẫu (optional)
+# Thêm dữ liệu mẫu
 npm run db:seed
 ```
 
-### 5. Chạy ứng dụng / Run Application
+### 4. Chạy ứng dụng
 ```bash
 # Development
 npm run dev
 
-# Production build
+# Build for production
 npm run build
 npm start
 ```
 
-## 🗄️ Cấu trúc Database / Database Schema
-
-### Bảng `gold_prices`
-```sql
-CREATE TABLE gold_prices (
-  id SERIAL PRIMARY KEY,
-  brand VARCHAR(50) NOT NULL,
-  buy_price DECIMAL(10,2) NOT NULL,
-  sell_price DECIMAL(10,2) NOT NULL,
-  date DATE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Indexes
-- `idx_gold_prices_brand_date` on (brand, date)
-- `idx_gold_prices_date` on (date)
-
 ## 📱 API Endpoints
 
 ### Public APIs
-- `GET /api/gold-prices` - Lấy danh sách giá vàng
-- `GET /api/gold-prices/chart` - Lấy dữ liệu biểu đồ
+- `GET /api/products` - Lấy danh sách sản phẩm với lọc và sắp xếp
+- `GET /api/categories` - Lấy danh sách danh mục
 
 ### Admin APIs
-- `POST /api/admin/update-price` - Cập nhật giá thủ công
-- `POST /api/admin/upload-excel` - Tải lên file Excel
+- `GET|POST|PUT|DELETE /api/products/crud` - CRUD sản phẩm
+- `GET /api/images` - Lấy danh sách hình ảnh
+- `POST /api/admin/upload-image` - Upload hình ảnh lên Cloudinary
+- `POST /api/auth/login` - Đăng nhập admin
+- `POST /api/auth/logout` - Đăng xuất
 
-## 🎨 Giao diện / UI Components
+## 🎨 Components Chính
 
-### Components chính
-- `Header` - Navigation và language switcher
-- `GoldPriceCard` - Hiển thị giá vàng từng thương hiệu
-- `GoldPriceChart` - Biểu đồ giá vàng với Chart.js
+### Frontend Components
+- **Header**: Navigation, logo, hotline, email
+- **CategoryNavigation**: Menu danh mục với search bar
+- **ProductCard**: Hiển thị sản phẩm với ảnh thumbnail
+- **Banner**: Popup khi truy cập lần đầu
+- **Breadcrumb**: Điều hướng trang
 
-### Pages
-- `/` - Trang chủ với giá vàng mới nhất
-- `/admin` - Trang quản trị
-- `/chart` - Trang biểu đồ chi tiết
+### Admin Components
+- **AdminLayout**: Layout chung cho trang admin
+- **ProductForm**: Form thêm/sửa sản phẩm
+- **ImageManager**: Upload và gán ảnh cho sản phẩm
+- **StatsCard**: Hiện thị thống kê dashboard
 
-## 🌐 Đa ngôn ngữ / Internationalization
+## 📦 Scripts hữu ích
 
-Hỗ trợ 2 ngôn ngữ:
-- **Tiếng Việt** (mặc định)
-- **English**
-
-Sử dụng Next.js i18n và custom translation system.
-
-## 📊 Biểu đồ / Charts
-
-### Thời gian / Time Periods
-- 7 ngày / 7 days
-- 30 ngày / 30 days  
-- 6 tháng / 6 months
-- 5 năm / 5 years
-- 10 năm / 10 years
-- 50 năm / 50 years
-
-### Loại dữ liệu / Data Types
-- Giá mua vào / Buy price
-- Giá bán ra / Sell price
-- Giá trung bình / Average price
-
-## 🔄 Auto-refresh
-
-Tự động cập nhật dữ liệu mỗi 1 tiếng trong khung giờ 9h sáng - 7h tối.
-
-## 📱 Responsive Design
-
-- Mobile-first approach
-- Tailwind CSS breakpoints
-- Touch-friendly interactions
-- Optimized for all screen sizes
-
-## 🚀 Deployment
-
-### Render.com
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy automatically on push
-
-### Environment Variables for Production
-```env
-DB_PASS=your_production_db_password
-DB_URL=your_production_db_url
-DB_USER=your_production_db_user
-NEXTAUTH_SECRET=your_production_secret
-NEXTAUTH_URL=https://your-domain.com
+```bash
+npm run db:migrate    # Tạo database tables
+npm run db:seed       # Thêm dữ liệu mẫu
+npm run build         # Build production
+npm run start         # Chạy production build
 ```
 
-## 📈 SEO Optimization
+## 🚀 Tính năng nâng cao
 
-- Server-side rendering (SSR)
-- Static generation (SSG)
-- Meta tags optimization
-- Open Graph tags
-- Structured data
+### SEO Optimization
+- Next.js SSR/SSG
+- Meta tags động
+- Structured data (JSON-LD)
 - Sitemap generation
-- Performance optimization
 
-## 🔒 Security
+### Performance
+- Image optimization (Cloudinary)
+- Code splitting
+- Lazy loading
+- Database connection pooling
 
+### Security
 - Input validation
 - SQL injection prevention
 - File upload restrictions
-- Environment variable protection
+- Admin authentication
 - HTTPS enforcement
+
+## 📊 Thống kê dự án
+
+- **6 danh mục sản phẩm**
+- **20+ APIs endpoints**
+- **10+ UI components**
+- **Responsive design** trên tất cả devices
+- **Multi-role support** (Public/Admin)
+
+## 🎯 Roadmap tương lai
+
+### Phase 2
+- [ ] **Product detail pages** - Trang chi tiết sản phẩm
+- [ ] **Shopping cart** - Giỏ hàng (không thanh toán thực)
+- [ ] **Blog system** - Viết bài SEO content
+
+### Phase 3
+- [ ] **Email subscription** - Đăng ký nhận tin
+- [ ] **Contact form** - Form liên hệ
+- [ ] **Analytics tracking** - Google Analytics
+- [ ] **Performance monitoring**
+
+## 🤝 Đóng góp
+
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/new-feature`)
+3. Commit changes (`git commit -m 'Add new feature'`)
+4. Push to branch (`git push origin feature/new-feature`)
+5. Tạo Pull Request
+
+## 📞 Hỗ trợ
+
+- **Email**: support@netson.vn
+- **Phone**: 0904.xxx.xxx
+- **GitHub Issues**: Tạo issue cho lỗi hoặc tính năng mới
 
 ## 📝 License
 
-MIT License
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
-## 📞 Support
-
-Nếu có vấn đề hoặc câu hỏi, vui lòng tạo issue trên GitHub.
-
-For support or questions, please create an issue on GitHub.
+MIT License - Được sử dụng thoải mái cho mục đích thương mại và cá nhân.
 
 ## 🔄 Changelog
 
-### v1.0.0
-- Initial release
-- Basic gold price tracking
-- Admin panel
-- Multi-language support
-- Responsive design
-- Chart functionality
+### v1.0.0 - Initial Release
+- ✅ **Trang chủ chuyên nghiệp** với sản phẩm và hình ảnh
+- ✅ **Admin dashboard** hoàn chỉnh (CRUD sản phẩm, quản lý ảnh)
+- ✅ **Responsive design** trên mobile & desktop
+- ✅ **Database với PostgreSQL** + Supabase
+- ✅ **Image hosting** với Cloudinary
+- ✅ **SEO optimization** cơ bản
+- ✅ **Authentication** cho admin
 
+---
 
+**NetSon - Nâng tầm giá trị của mọi sự kiện!** 🏆✨
