@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { BrandProvider } from '../contexts/BrandContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,9 +18,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        <BrandProvider>
           {children}
-        </BrandProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/database';
-import { ApiResponse, CreateProductRequest, UpdateProductRequest, Product } from '../../../types/api';
+import { ApiResponse, Product, ProductFilters, CreateProductRequest, UpdateProductRequest } from '../../../types/api';
 
 // Helper function to generate slug
 function generateSlug(title: string): string {
@@ -12,44 +12,104 @@ function generateSlug(title: string): string {
     .trim();
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ApiResponse<any>>
-) {
-  switch (req.method) {
-    case 'GET':
-      return handleGet(req, res);
-    case 'POST':
-      return handlePost(req, res);
-    case 'PUT':
-      return handlePut(req, res);
-    case 'DELETE':
-      return handleDelete(req, res);
-    default:
-      res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
-      res.status(405).json({
-        success: false,
-        message: `Method ${req.method} not allowed`
-      });
-  }
-}
-
-// GET - Fetch all products (admin view, includes non-active)
-async function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse<Product[]>>) {
+export async function GET(request: NextRequest) {
   try {
-    const query = `
-      SELECT
-        p.*,
-        c.name as category_name,
-        array_agg(i.secure_url) FILTER (WHERE i.secure_url IS NOT NULL) as image_urls
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category') || undefined;
+    const price_min = searchParams.get('price_min') || undefined;
+    const price_max = searchParams.get('price_max') || undefined;
+    const is_featured = searchParams.get('is_featured') === 'true';
+    const search = searchParams.get('search') || undefined;
+    const sort_by = searchParams.get('sort_by') || 'default';
+    const page = parseInt(searchParams.get('page') || '1') || 1;
+    const limit = parseInt(searchParams.get('limit') || '12') || 12;
+
+    // First get products
+    let query = `
+      SELECT p.*, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN images i ON i.product_id = p.id
-      GROUP BY p.id, c.name
-      ORDER BY p.sort_order ASC, p.created_at DESC
+      WHERE p.is_active = true
     `;
 
-    const result = await db.query(query);
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    // Add filters
+    if (category) {
+      query += ` AND c.slug = $${paramIndex}`;
+      params.push(category);
+      paramIndex++;
+    }
+
+    if (price_min && !isNaN(Number(price_min))) {
+      query += ` AND p.price >= $${paramIndex}`;
+      params.push(Number(price_min));
+      paramIndex++;
+    }
+
+    if (price_max && !isNaN(Number(price_max))) {
+      query += ` AND p.price <= $${paramIndex}`;
+      params.push(Number(price_max));
+      paramIndex++;
+    }
+
+    if (is_featured) {
+      query += ` AND p.is_featured = true`;
+    }
+
+    if (search && search.trim()) {
+      query += ` AND (p.title ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`;
+      params.push(`%${search.trim()}%`);
+      paramIndex++;
+    }
+
+    // Add sorting
+    switch (sort_by) {
+      case 'popular':
+        query += ' ORDER BY p.view_count DESC, p.likes DESC';
+        break;
+      case 'rating':
+        query += ' ORDER BY p.rating DESC, p.likes DESC';
+        break;
+      case 'latest':
+        query += ' ORDER BY p.created_at DESC';
+        break;
+      case 'price_low':
+        query += ' ORDER BY p.price ASC';
+        break;
+      case 'price_high':
+        query += ' ORDER BY p.price DESC';
+        break;
+      default:
+        query += ' ORDER BY p.sort_order ASC, p.created_at DESC';
+    }
+
+    // Add pagination
+    const offset = (page - 1) * limit;
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+
+    // Fetch images for all products in this result set
+    const productIds = result.rows.map(row => row.id);
+    let imageResults: any = { rows: [] };
+    if (productIds.length > 0) {
+      const imageQuery = `
+        SELECT product_id, array_agg(secure_url) as image_urls
+        FROM images
+        WHERE product_id = ANY($1)
+        GROUP BY product_id
+      `;
+      imageResults = await db.query(imageQuery, [productIds]);
+    }
+
+    // Create a map of product_id to images
+    const imageMap = new Map();
+    imageResults.rows.forEach((row: any) => {
+      imageMap.set(row.product_id, row.image_urls || []);
+    });
 
     const products: Product[] = result.rows.map(row => ({
       id: row.id,
@@ -57,8 +117,8 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
       description: row.description,
       category_id: row.category_id,
       price: row.price ? Number(row.price) : null,
-      images: row.image_urls || [],
-      featured_image: row.featured_image || (row.image_urls?.[0] || null),
+      images: imageMap.get(row.id) || [],
+      featured_image: row.featured_image,
       meta_description: row.meta_description,
       slug: row.slug,
       is_featured: row.is_featured,
@@ -85,22 +145,23 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
       } : undefined
     }));
 
-    res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: products
     });
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({
+    return NextResponse.json({
       success: false,
-      message: 'Lỗi khi tải sản phẩm'
-    });
+      message: 'Lỗi khi tải sản phẩm',
+      error: 'Database error'
+    }, { status: 500 });
   }
 }
 
-// POST - Create new product
-async function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse<Product>>) {
+export async function POST(request: NextRequest) {
   try {
+    const body: CreateProductRequest = await request.json();
     const {
       title,
       description,
@@ -114,24 +175,24 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse<
       stock_quantity,
       weight_grams,
       dimensions_cm
-    }: CreateProductRequest = req.body;
+    } = body;
 
     // Validate required fields
     if (!title || !title.trim()) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         message: 'Tên sản phẩm không được để trống'
-      });
+      }, { status: 400 });
     }
 
     // Check if category exists if provided
     if (category_id) {
       const categoryCheck = await db.query('SELECT id FROM categories WHERE id = $1', [category_id]);
       if (categoryCheck.rows.length === 0) {
-        return res.status(400).json({
+        return NextResponse.json({
           success: false,
           message: 'Danh mục không tồn tại'
-        });
+        }, { status: 400 });
       }
     }
 
@@ -141,10 +202,10 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse<
     // Check slug uniqueness
     const slugCheck = await db.query('SELECT id FROM products WHERE slug = $1', [slug]);
     if (slugCheck.rows.length > 0) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         message: 'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác'
-      });
+      }, { status: 400 });
     }
 
     const result = await db.query(`
@@ -197,31 +258,31 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse<
       updated_at: result.rows[0].updated_at.toISOString()
     };
 
-    res.status(201).json({
+    return NextResponse.json({
       success: true,
       data: newProduct,
       message: 'Tạo sản phẩm thành công'
     });
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({
+    return NextResponse.json({
       success: false,
       message: error instanceof Error ? error.message : 'Lỗi khi tạo sản phẩm'
-    });
+    }, { status: 500 });
   }
 }
 
-// PUT - Update product
-async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<Product>>) {
+export async function PUT(request: NextRequest) {
   try {
-    const { id } = req.query;
-    const updates: UpdateProductRequest = req.body;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const updates: UpdateProductRequest = await request.json();
 
     if (!id) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         message: 'Thiếu ID sản phẩm'
-      });
+      }, { status: 400 });
     }
 
     // Build dynamic update query
@@ -232,19 +293,19 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
     // Handle each possible field
     if (updates.title !== undefined) {
       if (!updates.title.trim()) {
-        return res.status(400).json({
+        return NextResponse.json({
           success: false,
           message: 'Tên sản phẩm không được để trống'
-        });
+        }, { status: 400 });
       }
       const newSlug = generateSlug(updates.title);
       // Check slug uniqueness (excluding current product)
       const slugCheck = await db.query('SELECT id FROM products WHERE slug = $1 AND id != $2', [newSlug, id]);
       if (slugCheck.rows.length > 0) {
-        return res.status(400).json({
+        return NextResponse.json({
           success: false,
           message: 'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác'
-        });
+        }, { status: 400 });
       }
       updateFields.push(`title = $${paramIndex}, slug = $${paramIndex + 1}`);
       updateValues.push(updates.title.trim(), newSlug);
@@ -261,10 +322,10 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
       if (updates.category_id) {
         const categoryCheck = await db.query('SELECT id FROM categories WHERE id = $1', [updates.category_id]);
         if (categoryCheck.rows.length === 0) {
-          return res.status(400).json({
+          return NextResponse.json({
             success: false,
             message: 'Danh mục không tồn tại'
-          });
+          }, { status: 400 });
         }
       }
       updateFields.push(`category_id = $${paramIndex}`);
@@ -327,10 +388,10 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
     }
 
     if (updateFields.length === 0) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         message: 'Không có trường nào được cập nhật'
-      });
+      }, { status: 400 });
     }
 
     const query = `
@@ -345,10 +406,10 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
     const result = await db.query(query, updateValues);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
+      return NextResponse.json({
         success: false,
         message: 'Sản phẩm không tồn tại'
-      });
+      }, { status: 404 });
     }
 
     const updatedProduct: Product = {
@@ -376,54 +437,54 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse<ApiResponse<P
       updated_at: result.rows[0].updated_at.toISOString()
     };
 
-    res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: updatedProduct,
       message: 'Cập nhật sản phẩm thành công'
     });
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({
+    return NextResponse.json({
       success: false,
       message: error instanceof Error ? error.message : 'Lỗi khi cập nhật sản phẩm'
-    });
+    }, { status: 500 });
   }
 }
 
-// DELETE - Delete product
-async function handleDelete(req: NextApiRequest, res: NextApiResponse<ApiResponse<null>>) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { id } = req.query;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
     if (!id) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         message: 'Thiếu ID sản phẩm'
-      });
+      }, { status: 400 });
     }
 
     // Check if product exists
     const existing = await db.query('SELECT id FROM products WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
-      return res.status(404).json({
+      return NextResponse.json({
         success: false,
         message: 'Sản phẩm không tồn tại'
-      });
+      }, { status: 404 });
     }
 
     // Delete product (cascade will handle related records if set up)
     await db.query('DELETE FROM products WHERE id = $1', [id]);
 
-    res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: null,
       message: 'Xóa sản phẩm thành công'
     });
   } catch (error) {
     console.error('Error deleting product:', error);
-    res.status(500).json({
+    return NextResponse.json({
       success: false,
-      message: 'Lỗi khi xóa sản phẩm'
-    });
+      message: error instanceof Error ? error.message : 'Lỗi khi xóa sản phẩm'
+    }, { status: 500 });
   }
 }
