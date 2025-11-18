@@ -1,27 +1,36 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Upload, X, Image as ImageIcon, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import Header from '../../../components/Header';
-import Breadcrumb from '../../../components/Breadcrumb';
-import { Image as ImageType } from '../../../lib/database';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
+import Header from "../../../components/Header";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { Image as ImageType } from "../../../lib/database";
 
 export default function ImagesAdminPage() {
   const [user, setUser] = useState<any>(null);
   const [images, setImages] = useState<ImageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">(
+    "success"
+  );
 
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [altText, setAltText] = useState('');
-  const [title, setTitle] = useState('');
+  const [altText, setAltText] = useState("");
+  const [title, setTitle] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
-  const [productId, setProductId] = useState('');
+  const [productId, setProductId] = useState("");
   const [products, setProducts] = useState<any[]>([]);
 
   // Modal state for assigning images to products
@@ -38,21 +47,21 @@ export default function ImagesAdminPage() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('/api/auth/check');
+      const response = await fetch("/api/auth/check");
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
       } else {
-        router.push('/admin/login');
+        router.push("/admin/login");
       }
     } catch (error) {
-      router.push('/admin/login');
+      router.push("/admin/login");
     }
   };
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products/crud');
+      const response = await fetch("/api/products");
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -60,14 +69,14 @@ export default function ImagesAdminPage() {
         }
       }
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error("Error loading products:", error);
     }
   };
 
   const loadImages = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/images');
+      const response = await fetch("/api/images");
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -75,7 +84,7 @@ export default function ImagesAdminPage() {
         }
       }
     } catch (error) {
-      console.error('Error loading images:', error);
+      console.error("Error loading images:", error);
     } finally {
       setIsLoading(false);
     }
@@ -85,13 +94,13 @@ export default function ImagesAdminPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       // Check file type
-      if (!file.type.startsWith('image/')) {
-        showMessage('Vui lòng chọn file ảnh hợp lệ', 'error');
+      if (!file.type.startsWith("image/")) {
+        showMessage("Vui lòng chọn file ảnh hợp lệ", "error");
         return;
       }
       // Check file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        showMessage('File ảnh không được vượt quá 5MB', 'error');
+        showMessage("File ảnh không được vượt quá 5MB", "error");
         return;
       }
       setSelectedFile(file);
@@ -102,57 +111,59 @@ export default function ImagesAdminPage() {
     e.preventDefault();
 
     if (!selectedFile) {
-      showMessage('Vui lòng chọn file ảnh', 'error');
+      showMessage("Vui lòng chọn file ảnh", "error");
       return;
     }
 
     setUploadLoading(true);
-    setMessage('');
+    setMessage("");
 
     try {
       const formData = new FormData();
-      formData.append('image', selectedFile);
+      formData.append("image", selectedFile);
 
-      if (altText.trim()) formData.append('alt_text', altText.trim());
-      if (title.trim()) formData.append('title', title.trim());
-      if (productId.trim()) formData.append('product_id', productId.trim());
-      formData.append('is_featured', isFeatured.toString());
+      if (altText.trim()) formData.append("alt_text", altText.trim());
+      if (title.trim()) formData.append("title", title.trim());
+      if (productId.trim()) formData.append("product_id", productId.trim());
+      formData.append("is_featured", isFeatured.toString());
 
-      const response = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        body: formData
+      const response = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        body: formData,
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        showMessage('Upload ảnh thành công!', 'success');
+        showMessage("Upload ảnh thành công!", "success");
         // Reset form
         setSelectedFile(null);
-        setAltText('');
-        setTitle('');
+        setAltText("");
+        setTitle("");
         setIsFeatured(false);
-        setProductId('');
+        setProductId("");
         // Reload images
         loadImages();
         // Reset file input
-        const fileInput = document.getElementById('file-input') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
+        const fileInput = document.getElementById(
+          "file-input"
+        ) as HTMLInputElement;
+        if (fileInput) fileInput.value = "";
       } else {
-        showMessage(data.message || 'Lỗi upload ảnh', 'error');
+        showMessage(data.message || "Lỗi upload ảnh", "error");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      showMessage('Lỗi kết nối server', 'error');
+      console.error("Upload error:", error);
+      showMessage("Lỗi kết nối server", "error");
     } finally {
       setUploadLoading(false);
     }
   };
 
-  const showMessage = (text: string, type: 'success' | 'error') => {
+  const showMessage = (text: string, type: "success" | "error") => {
     setMessage(text);
     setMessageType(type);
-    setTimeout(() => setMessage(''), 5000);
+    setTimeout(() => setMessage(""), 5000);
   };
 
   if (!user) {
@@ -170,17 +181,23 @@ export default function ImagesAdminPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <Breadcrumb items={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Quản Lý Hình Ảnh' }
-      ]} />
+      <Breadcrumb
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: "Quản Lý Hình Ảnh" },
+        ]}
+      />
 
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Quản Lý Hình Ảnh</h1>
-              <p className="text-gray-600 mt-2">Upload và quản lý hình ảnh sản phẩm</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Quản Lý Hình Ảnh
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Upload và quản lý hình ảnh sản phẩm
+              </p>
             </div>
             <Link
               href="/admin"
@@ -192,13 +209,15 @@ export default function ImagesAdminPage() {
 
           {/* Message Display */}
           {message && (
-            <div className={`mb-6 p-4 rounded-lg border ${
-              messageType === 'success'
-                ? 'bg-green-50 border-green-200 text-green-800'
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
+            <div
+              className={`mb-6 p-4 rounded-lg border ${
+                messageType === "success"
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-red-50 border-red-200 text-red-800"
+              }`}
+            >
               <div className="flex items-center space-x-2">
-                {messageType === 'success' ? (
+                {messageType === "success" ? (
                   <CheckCircle className="w-5 h-5" />
                 ) : (
                   <AlertCircle className="w-5 h-5" />
@@ -212,7 +231,9 @@ export default function ImagesAdminPage() {
             {/* Upload Form */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Upload Ảnh Mới</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Upload Ảnh Mới
+                </h2>
 
                 <form onSubmit={handleUpload} className="space-y-6">
                   {/* File Upload */}
@@ -226,17 +247,22 @@ export default function ImagesAdminPage() {
                           <div className="flex items-center space-x-2">
                             <ImageIcon className="w-8 h-8 text-blue-600" />
                             <div className="text-left">
-                              <p className="text-sm text-gray-900">{selectedFile.name}</p>
+                              <p className="text-sm text-gray-900">
+                                {selectedFile.name}
+                              </p>
                               <p className="text-xs text-gray-500">
-                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)}{" "}
+                                MB
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => {
                                 setSelectedFile(null);
-                                const fileInput = document.getElementById('file-input') as HTMLInputElement;
-                                if (fileInput) fileInput.value = '';
+                                const fileInput = document.getElementById(
+                                  "file-input"
+                                ) as HTMLInputElement;
+                                if (fileInput) fileInput.value = "";
                               }}
                               className="text-red-500 hover:text-red-700"
                             >
@@ -313,7 +339,10 @@ export default function ImagesAdminPage() {
                       <option value="">Chọn sản phẩm...</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.title} {product.price ? `(${product.price.toLocaleString('vi-VN')}₫)` : '(Liên hệ)'}
+                          {product.title}{" "}
+                          {product.price
+                            ? `(${product.price.toLocaleString("vi-VN")}₫)`
+                            : "(Liên hệ)"}
                         </option>
                       ))}
                     </select>
@@ -328,7 +357,10 @@ export default function ImagesAdminPage() {
                       onChange={(e) => setIsFeatured(e.target.checked)}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="isFeatured" className="ml-2 block text-sm text-gray-900">
+                    <label
+                      htmlFor="isFeatured"
+                      className="ml-2 block text-sm text-gray-900"
+                    >
                       Đặt làm ảnh nổi bật
                     </label>
                   </div>
@@ -371,7 +403,9 @@ export default function ImagesAdminPage() {
                   <div className="text-center py-8">
                     <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Chưa có hình ảnh nào</p>
-                    <p className="text-sm text-gray-400">Upload ảnh đầu tiên của bạn</p>
+                    <p className="text-sm text-gray-400">
+                      Upload ảnh đầu tiên của bạn
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -380,7 +414,9 @@ export default function ImagesAdminPage() {
                         <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
                           <img
                             src={image.secure_url}
-                            alt={image.alt_text || image.title || 'Product image'}
+                            alt={
+                              image.alt_text || image.title || "Product image"
+                            }
                             className="w-full h-full object-cover"
                           />
                           {image.is_featured && (
@@ -391,10 +427,12 @@ export default function ImagesAdminPage() {
                         </div>
                         <div className="mt-2">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {image.title || 'Untitled'}
+                            {image.title || "Untitled"}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(image.created_at).toLocaleDateString('vi-VN')}
+                            {new Date(image.created_at).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </p>
                           {image.product_id && (
                             <p className="text-xs text-blue-600">
