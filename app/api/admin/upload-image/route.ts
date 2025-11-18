@@ -7,9 +7,9 @@ import { ApiResponse, CloudinaryUploadResponse, Image } from '../../../../types/
 const cloudinaryConfig = process.env.CLOUDINARY_URL
   ? { url: process.env.CLOUDINARY_URL }
   : {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dtvbu88gk',
-      api_key: process.env.CLOUDINARY_API_KEY || '827239771914653',
-      api_secret: process.env.CLOUDINARY_API_SECRET || '5L5qo6KVo-rXw-Ws4rZKdJn628k'
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
     };
 
 cloudinary.config(cloudinaryConfig);
