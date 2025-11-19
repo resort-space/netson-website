@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(article, { status: 201 });
 
-  } catch (error) {
+  } catch (error:any) {
     console.error('Error creating article:', error);
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Article with this slug already exists' }, { status: 409 });
