@@ -93,7 +93,7 @@ export default function ArticleForm({
       .replace(/[^a-zA-Z0-9\s]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim("-");
+      .replace(/^-+|-+$/g, "");
     setFormData((prev) => ({ ...prev, slug }));
   };
 
